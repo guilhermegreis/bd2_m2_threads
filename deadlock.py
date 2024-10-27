@@ -2,6 +2,8 @@ import threading
 import time
 import random
 
+parar_threads = False
+
 class Recurso:
     def __init__(self, nome):
         self.nome = nome
@@ -17,7 +19,7 @@ class Transacao(threading.Thread):
 
     def run(self):
         print(f"Thread {self.id} iniciando.")
-        while True:
+        while not parar_threads:
             if self.adquirir_recursos():
                 print(f"Thread {self.id} obtém {self.recurso1.nome} e {self.recurso2.nome}.")
                 time.sleep(random.uniform(1, 3))
@@ -45,6 +47,8 @@ class Transacao(threading.Thread):
         print(f"Thread {self.id} liberou {self.recurso1.nome} e {self.recurso2.nome}.")
 
 def main():
+    global parar_threads
+
     recurso_X = Recurso("Recurso X")
     recurso_Y = Recurso("Recurso Y")
 
@@ -55,6 +59,14 @@ def main():
         threads.append(t)
         time.sleep(random.uniform(0.1, 0.5))
         t.start()
+
+    try:
+        while any(t.is_alive() for t in threads):
+            for t in threads:
+                t.join(timeout=1)
+    except KeyboardInterrupt:
+        print("\nExecução interrompida pelo usuário.")
+        parar_threads = True
 
     for t in threads:
         t.join()
